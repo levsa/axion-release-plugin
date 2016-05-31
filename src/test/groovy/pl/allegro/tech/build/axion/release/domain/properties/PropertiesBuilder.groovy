@@ -35,6 +35,11 @@ class PropertiesBuilder {
         return this
     }
 
+    PropertiesBuilder withTagRules(TagProperties tagRules) {
+        this.tagProperties = tagRules
+        return this
+    }
+
     PropertiesBuilder withHooksRules(HooksProperties hooksRules) {
         this.hooksProperties = hooksRules
         return this

@@ -1,13 +1,15 @@
 package pl.allegro.tech.build.axion.release.domain
 
+import static pl.allegro.tech.build.axion.release.domain.properties.HooksPropertiesBuilder.hooksProperties
+import static pl.allegro.tech.build.axion.release.domain.properties.PropertiesBuilder.properties
+import static pl.allegro.tech.build.axion.release.domain.properties.TagPropertiesBuilder.tagProperties
+import static pl.allegro.tech.build.axion.release.domain.properties.VersionPropertiesBuilder.versionProperties
 import pl.allegro.tech.build.axion.release.RepositoryBasedTest
 import pl.allegro.tech.build.axion.release.domain.hooks.ReleaseHooksRunner
 import pl.allegro.tech.build.axion.release.domain.properties.Properties
+import pl.allegro.tech.build.axion.release.domain.properties.TagProperties
 import pl.allegro.tech.build.axion.release.domain.scm.ScmService
-
-import static pl.allegro.tech.build.axion.release.domain.properties.HooksPropertiesBuilder.hooksProperties
-import static pl.allegro.tech.build.axion.release.domain.properties.PropertiesBuilder.properties
-import static pl.allegro.tech.build.axion.release.domain.properties.VersionPropertiesBuilder.versionProperties
+import spock.lang.IgnoreRest
 
 class ReleaserTest extends RepositoryBasedTest {
 
@@ -112,4 +114,21 @@ class ReleaserTest extends RepositoryBasedTest {
         currentVersion(rules) == '3.2.0'
         repository.lastLogMessages(1) == ['release version: 3.2.0']
     }
+
+    def "should create branch when branch called"() {
+        given:
+        repository.tag('release-102.0.0-RC1')
+        Closure closure = { TagProperties rules, String version -> 'REL-102' }
+        Properties rules = properties()
+                .withTagRules(tagProperties().withBranchName(closure).build())
+                .build()
+
+        when:
+        releaser.branch(rules)
+
+        then:
+        repository.listAllBranches()*.fullName == ['refs/heads/REL-102', 'refs/heads/master',
+             'refs/remotes/origin/master', 'refs/remotes/origin/REL-102']
+    }
+
 }

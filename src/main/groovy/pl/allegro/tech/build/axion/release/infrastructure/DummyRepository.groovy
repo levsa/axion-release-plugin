@@ -6,7 +6,10 @@ import pl.allegro.tech.build.axion.release.domain.scm.ScmPosition
 import pl.allegro.tech.build.axion.release.domain.scm.ScmPushOptions
 import pl.allegro.tech.build.axion.release.domain.scm.ScmRepository
 
+import java.util.List;
 import java.util.regex.Pattern
+
+import org.ajoberstar.grgit.Branch;
 
 class DummyRepository implements ScmRepository {
 
@@ -14,9 +17,16 @@ class DummyRepository implements ScmRepository {
 
     DummyRepository() {
     }
-    
+
     private void log(String commandName) {
         logger.quiet("Couldn't perform $commandName command on uninitialized repository")
+    }
+
+    @Override
+    List<Branch> listAllBranches() {
+        log('list all branches')
+        def remoteBranch = new Branch(fullName: 'remotes/origin/master')
+        return [new Branch(fullName: 'refs/heads/master', trackingBranch: remoteBranch), remoteBranch]
     }
 
     @Override
@@ -27,6 +37,11 @@ class DummyRepository implements ScmRepository {
     @Override
     void tag(String tagName) {
         log('create tag')
+    }
+
+    @Override
+    void branch(String tagName) {
+        log('create branch')
     }
 
     @Override
@@ -54,7 +69,7 @@ class DummyRepository implements ScmRepository {
         logger.quiet("Could not resolve current position on uninitialized repository, returning default")
         return ScmPosition.defaultPosition()
     }
-    
+
     @Override
     ScmPosition currentPosition(Pattern tagPattern, Pattern inversePattern) {
         return currentPosition(tagPattern)

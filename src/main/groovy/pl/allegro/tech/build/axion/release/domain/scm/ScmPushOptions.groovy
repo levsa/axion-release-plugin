@@ -7,7 +7,9 @@ import groovy.transform.Immutable
 class ScmPushOptions {
 
     String remote
-    
+
     boolean pushTagsOnly
-    
+
+    boolean all
+
 }

@@ -30,10 +30,10 @@ class GitRepositoryTest extends Specification {
     void setup() {
         Project remoteProject = ProjectBuilder.builder().build()
         remoteRawRepository = GitProjectBuilder.gitProject(remoteProject).withInitialCommit().build()[Grgit]
-        
+
         project = ProjectBuilder.builder().build()
         Map repositories = GitProjectBuilder.gitProject(project, remoteProject).build()
-        
+
         rawRepository = repositories[Grgit]
         repository = repositories[GitRepository]
     }
@@ -114,7 +114,7 @@ class GitRepositoryTest extends Specification {
     def "should return default position when no commit in repository"() {
         given:
         GitRepository commitlessRepository = GitProjectBuilder.gitProject(ProjectBuilder.builder().build()).build()[GitRepository]
-        
+
         when:
         ScmPosition position = commitlessRepository.currentPosition(~/^release.*/)
 
@@ -215,7 +215,7 @@ class GitRepositoryTest extends Specification {
     def "should not push commits if the pushTagsOnly flag is set to true"() {
         repository.tag('release-push')
         repository.commit(['*'], 'commit after release-push')
-        
+
         when:
         repository.push(ScmIdentity.defaultIdentity(), new ScmPushOptions(remote: 'origin', pushTagsOnly: true))
 
@@ -242,4 +242,50 @@ class GitRepositoryTest extends Specification {
         remoteRawRepository.log(maxCommits: 1)*.fullMessage == ['InitialCommit']
         remoteRawRepository.tag.list()*.fullName == []
     }
+
+    def "should not create a branch if not on a tag"() {
+        repository.tag('release-1.0')
+        repository.commit(['*'], 'commit after release-push')
+
+        when:
+        repository.branch("someBranch")
+
+        then:
+        rawRepository.branch.list()*.fullName == ['refs/heads/master']
+    }
+
+    def "should create a branch if on a tag"() {
+        repository.tag('release-1.0')
+
+        when:
+        repository.branch("someBranch")
+
+        then:
+        rawRepository.branch.list()*.fullName == ['refs/heads/master', 'refs/heads/someBranch']
+    }
+
+    def "should push branches"() {
+        repository.tag('release-1.0')
+
+        when:
+        repository.branch("someBranch")
+        repository.push(ScmIdentity.defaultIdentity(), new ScmPushOptions(remote: 'origin'), true)
+
+        then:
+        rawRepository.branch.list()*.fullName == ['refs/heads/master', 'refs/heads/someBranch']
+        remoteRawRepository.branch.list()*.fullName == ['refs/heads/master', 'refs/heads/someBranch']
+    }
+
+    def "should list all branches"() {
+        repository.tag('release-1.0')
+
+        when:
+        repository.branch("someBranch")
+        repository.push(ScmIdentity.defaultIdentity(), new ScmPushOptions(remote: 'origin'), true)
+
+        then:
+        repository.listAllBranches()*.fullName == ['refs/heads/master', 'refs/heads/someBranch', 'refs/remotes/origin/master', 'refs/remotes/origin/someBranch']
+        remoteRawRepository.branch.list()*.fullName == ['refs/heads/master', 'refs/heads/someBranch']
+    }
+
 }

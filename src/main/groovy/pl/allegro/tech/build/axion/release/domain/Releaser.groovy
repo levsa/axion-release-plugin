@@ -47,4 +47,20 @@ class Releaser {
     private boolean notOnTagAlready(VersionWithPosition positionedVersion) {
         return positionedVersion.snapshotVersion
     }
+
+    void branch(Properties rules) {
+        VersionWithPosition positionedVersion = versionService.currentVersion(rules.version, rules.tag, rules.nextVersion)
+        Version version = positionedVersion.version
+
+        if (notOnTagAlready(positionedVersion)) {
+            logger.error("Not on a tag, not creating a branch")
+        } else {
+            String tagName = rules.tag.serialize(rules.tag, version.toString())
+            String branchName = rules.tag.branchName(rules.tag, version.toString())
+
+            logger.quiet("Creating branch: branchName")
+            repository.branch(branchName)
+            repository.pushAllBranches()
+        }
+    }
 }

@@ -6,16 +6,25 @@ import pl.allegro.tech.build.axion.release.domain.scm.ScmPosition
 import pl.allegro.tech.build.axion.release.domain.scm.ScmPushOptions
 import pl.allegro.tech.build.axion.release.domain.scm.ScmRepository
 
+import java.util.List;
 import java.util.regex.Pattern
 
+import org.ajoberstar.grgit.Branch;
+
 class DryRepository implements ScmRepository {
-    
+
     private static final ReleaseLogger logger = ReleaseLogger.Factory.logger(DryRepository)
 
     private final ScmRepository delegateRepository
 
     DryRepository(ScmRepository delegateRepository) {
         this.delegateRepository = delegateRepository
+    }
+
+    @Override
+    List<Branch> listAllBranches() {
+        log('fetching branches from remote')
+        return delegateRepository.listAllBranches()
     }
 
     @Override
@@ -27,6 +36,11 @@ class DryRepository implements ScmRepository {
     @Override
     void tag(String tagName) {
         log("creating tag with name: $tagName")
+    }
+
+    @Override
+    void branch(String branchName) {
+        log("creating branch with name: branchName")
     }
 
     @Override
@@ -53,7 +67,7 @@ class DryRepository implements ScmRepository {
     ScmPosition currentPosition(Pattern tagPattern, Pattern inversePattern) {
         return currentPosition(tagPattern)
     }
-    
+
     @Override
     ScmPosition currentPosition(Pattern tagPattern) {
         ScmPosition position = delegateRepository.currentPosition(tagPattern)

@@ -3,7 +3,7 @@ package pl.allegro.tech.build.axion.release.domain.properties
 import groovy.transform.Immutable
 
 @Immutable
-class TagProperties {
+class BranchProperties {
 
     final String prefix
 
@@ -14,7 +14,5 @@ class TagProperties {
     final Closure<String> deserialize
 
     final Closure<String> initialVersion
-
-    final Closure<String> branchName
 
 }

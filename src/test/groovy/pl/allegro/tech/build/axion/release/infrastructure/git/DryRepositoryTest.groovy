@@ -21,6 +21,14 @@ class DryRepositoryTest extends Specification {
         0 * scm.tag(_)
     }
 
+    def "should not create actual branches in scm"() {
+        when:
+        dryRepository.branch("dry_branch")
+
+        then:
+        0 * scm.branch(_)
+    }
+
     def "should not push anything to scm"() {
         when:
         dryRepository.push(ScmIdentity.defaultIdentity(), new ScmPushOptions('dry-remote', false))
@@ -63,6 +71,15 @@ class DryRepositoryTest extends Specification {
 
         expect:
         dryRepository.checkAheadOfRemote()
+    }
+
+    def "should get all branches from delegate repository"() {
+        given:
+        def expectedBranches = ['b1', 'b2']
+        scm.listAllBranches() >> expectedBranches
+
+        expect:
+        dryRepository.listAllBranches() == expectedBranches
     }
 
 }

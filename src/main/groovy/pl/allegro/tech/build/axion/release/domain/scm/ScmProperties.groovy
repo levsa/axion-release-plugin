@@ -34,4 +34,8 @@ class ScmProperties {
     ScmPushOptions pushOptions() {
         return new ScmPushOptions(remote: remote, pushTagsOnly: pushTagsOnly)
     }
+
+    ScmPushOptions pushOptionsWithAll() {
+        return new ScmPushOptions(remote: remote, pushTagsOnly: pushTagsOnly, all: true)
+    }
 }

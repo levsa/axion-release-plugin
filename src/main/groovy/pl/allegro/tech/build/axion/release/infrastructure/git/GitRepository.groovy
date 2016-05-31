@@ -1,8 +1,15 @@
 package pl.allegro.tech.build.axion.release.infrastructure.git
 
+import java.util.List;
+import java.util.regex.Pattern
+
+import org.ajoberstar.grgit.Branch
 import org.ajoberstar.grgit.BranchStatus
 import org.ajoberstar.grgit.Grgit
 import org.ajoberstar.grgit.Status
+import org.ajoberstar.grgit.Tag
+import org.ajoberstar.grgit.operation.BranchAddOp
+import org.ajoberstar.grgit.operation.BranchListOp
 import org.ajoberstar.grgit.operation.FetchOp
 import org.eclipse.jgit.api.FetchCommand
 import org.eclipse.jgit.api.LogCommand
@@ -20,10 +27,9 @@ import org.eclipse.jgit.transport.RemoteConfig
 import org.eclipse.jgit.transport.TagOpt
 import org.eclipse.jgit.transport.Transport
 import org.eclipse.jgit.transport.URIish
+
 import pl.allegro.tech.build.axion.release.domain.logging.ReleaseLogger
 import pl.allegro.tech.build.axion.release.domain.scm.*
-
-import java.util.regex.Pattern
 
 class GitRepository implements ScmRepository {
 
@@ -32,9 +38,9 @@ class GitRepository implements ScmRepository {
     private static final String GIT_TAG_PREFIX = 'refs/tags/'
 
     private final TransportConfigFactory transportConfigFactory = new TransportConfigFactory()
-    
+
     private final File repositoryDir
-    
+
     private final Grgit repository
 
     private final ScmProperties properties
@@ -55,6 +61,11 @@ class GitRepository implements ScmRepository {
         if (properties.fetchTags) {
             this.fetchTags(properties.identity, properties.remote)
         }
+    }
+
+    @Override
+    List<Branch> listAllBranches() {
+        return repository.branch.list(mode: BranchListOp.Mode.ALL)
     }
 
     @Override
@@ -88,8 +99,19 @@ class GitRepository implements ScmRepository {
     }
 
     @Override
+    void branch(String branchName) {
+        String headId = repository.repository.jgit.repository.resolve(Constants.HEAD).name()
+        Tag currentHeadTag = repository.tag.list().find ({ it.commit.id == headId })
+        if (currentHeadTag) {
+            repository.branch.add(name: branchName, startPoint: currentHeadTag, mode: BranchAddOp.Mode.TRACK)
+        } else {
+            logger.debug("The head commit $headId is not a tag.")
+        }
+    }
+
+    @Override
     void push(ScmIdentity identity, ScmPushOptions pushOptions) {
-        push(identity, pushOptions, false)
+        push(identity, pushOptions, pushOptions.all)
     }
 
     void push(ScmIdentity identity, ScmPushOptions pushOptions, boolean all) {
@@ -161,7 +183,7 @@ class GitRepository implements ScmRepository {
     ScmPosition currentPosition(Pattern pattern) {
         return currentPosition(pattern, Pattern.compile('$a^'))
     }
-    
+
     @Override
     ScmPosition currentPosition(Pattern pattern, Pattern inversePattern) {
         if(!hasCommits()) {

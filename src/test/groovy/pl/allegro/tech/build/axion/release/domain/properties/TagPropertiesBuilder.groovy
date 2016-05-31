@@ -4,6 +4,8 @@ import pl.allegro.tech.build.axion.release.domain.TagNameSerializer
 
 class TagPropertiesBuilder {
 
+    Closure branchName = { TagProperties rules, String version -> 'rel-0.1.0' }
+
     private TagPropertiesBuilder() {
     }
 
@@ -17,8 +19,14 @@ class TagPropertiesBuilder {
                 deserialize: TagNameSerializer.DEFAULT.deserializer,
                 prefix: 'release',
                 versionSeparator: '-',
+                branchName: branchName,
                 initialVersion: { r, p -> '0.1.0' }
         )
+    }
+
+    TagPropertiesBuilder withBranchName(Closure closure) {
+        this.branchName = closure
+        this
     }
 
 }

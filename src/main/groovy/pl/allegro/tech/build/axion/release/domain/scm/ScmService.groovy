@@ -23,10 +23,23 @@ class ScmService {
         repository.tag(tagName)
     }
 
+    void branch(String branchName) {
+        repository.branch(branchName)
+    }
+
     void push() {
         if (!localOnlyResolver.localOnly(this.remoteAttached())) {
             logger.quiet("Pushing all to remote: ${scmProperties.remote}")
             repository.push(scmProperties.identity, scmProperties.pushOptions())
+        } else {
+            logger.quiet("Changes made to local repository only")
+        }
+    }
+
+    void pushAllBranches() {
+        if (!localOnlyResolver.localOnly(this.remoteAttached())) {
+            logger.quiet("Pushing all to remote: ${scmProperties.remote}")
+            repository.push(scmProperties.identity, scmProperties.pushOptionsWithAll())
         } else {
             logger.quiet("Changes made to local repository only")
         }
